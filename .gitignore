@@ -1,0 +1,22 @@
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+
+# LocalStack data
+localstack_data/
+report.json
+
+# Docker
+*.log
+*.env
+*.pid
+*.sock
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db

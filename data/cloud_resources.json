@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1",
+    "name": "bucket-1",
+    "tags": {
+      "totalAmount": "17kb"
+    }
+  },
+  {
+    "id": "2",
+    "name": "bucket-2",
+    "tags": {
+      "totalAmount": "30kb"
+    }
+  }
+]

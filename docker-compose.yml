@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+
+
+  # LocalStack: mock AWS environment
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566"           # Edge port for all services
+    environment:
+      SERVICES: s3             # Only start S3
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4566/_localstack/health || exit 1"]
+      interval: 15s
+      timeout: 15s
+      retries: 50
+      start_period: 30s
+
+  # Analyzer: cloud vs IaC analyzer script
+  analyzer:
+    build: .
+    container_name: analyzer
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+    command: python3 main.py
+
+volumes:
+  localstack_data:
