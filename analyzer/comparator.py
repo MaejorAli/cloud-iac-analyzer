@@ -44,7 +44,7 @@ def compare_resources(cloud_resource, iac_resource):
                 "IacValue": iac_value
             })
 
-    # Determine the state
+    # determine the state
     if not changes:
         state = "Match"
     else:

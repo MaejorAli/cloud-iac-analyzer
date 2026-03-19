@@ -16,7 +16,7 @@ def test_analyze_end_to_end(tmp_path):
     Full integration test of the analyzer
     """
 
-    # Create temporary test files
+    # create temporary test files
     cloud_data = [
         {"id": "1", "name": "bucket"}
     ]

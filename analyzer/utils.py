@@ -1,6 +1,6 @@
 # This function converts a nested dictionary into a flat dictionary
 # Example:
-# {"tags": {"size": "10kb"}} → {"tags.size": "10kb"}
+# {"tags": {"size": "10kb"}} to {"tags.size": "10kb"}
 
 def flatten_dict(data, parent_key='', separator='.'):
     """
