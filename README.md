@@ -1,5 +1,4 @@
 # Cloud vs IaC Analyzer
-### By Ali Shaibu-Salami
 
 ## Description
 This Python project compares your actual cloud resources with your IaC definitions, detects differences, and generates a report in JSON format, uploaded to an S3 bucket.
@@ -81,3 +80,7 @@ cat report.json
 - AWS CLI / awslocal
 
 - pytest
+
+
+## Author
+Ali Shaibu-Salami
