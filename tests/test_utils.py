@@ -66,5 +66,4 @@ def test_mixed_array_types():
 
     result = compare_resources(cloud, iac)
 
-    # depending on your flatten logic, this may be Modified
     assert result["State"] in ["Match", "Modified"]    
