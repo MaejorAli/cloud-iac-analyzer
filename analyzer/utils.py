@@ -24,6 +24,15 @@ def flatten_dict(data, parent_key='', separator='.'):
         # If value is another dictionary then recurse
         if isinstance(value, dict):
             items.extend(flatten_dict(value, new_key, separator).items())
+
+        elif isinstance(value, list): 
+           for i, item in enumerate(value):
+              array_key = f"{new_key}[{i}]"
+              if isinstance(item, dict):
+                  items.extend(flatten_dict(item, array_key, separator).items())
+              else:
+                items.append((array_key, item))
+
         else:
             # base case 
             items.append((new_key, value))

@@ -1,49 +1,44 @@
 import json
+import os
 import boto3
 from analyzer.comparator import compare_resources
 
 
+# CONFIGURATION 
+S3_ENDPOINT = os.getenv("S3_ENDPOINT_URL", "http://localstack:4566")
+AWS_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+
+CLOUD_FILE = os.getenv("CLOUD_RESOURCES_FILE", "data/cloud_resources.json")
+IAC_FILE = os.getenv("IAC_RESOURCES_FILE", "data/iac_resources.json")
+
+S3_BUCKET = os.getenv("S3_BUCKET_NAME", "analyzer-report")
+S3_KEY = os.getenv("S3_OBJECT_KEY", "report.json")
+
+
 def load_json(file_path):
-    """
-    Load JSON data from a file.
+    
+    try:
+        with open(file_path, 'r') as file:
+            return json.load(file)
 
-    Args:
-        file_path (str): Path to JSON file
+    except FileNotFoundError:
+        print(f"ERROR: File not found: {file_path}")
+        raise
 
-    Returns:
-        list: Parsed JSON data
-    """
-    with open(file_path, 'r') as file:
-        return json.load(file)
+    except json.JSONDecodeError as e:
+        print(f"ERROR: Invalid JSON in file '{file_path}': {e}")
+        raise
+
+    except Exception as e:
+        print(f"ERROR: Unexpected error while reading '{file_path}': {e}")
+        raise
 
 
 def index_iac_resources(iac_resources):
-    """
-    Convert IaC list into a dictionary for fast lookup by 'id'.
-
-    Example:
-        [{"id": "1"}] → {"1": {...}}
-
-    Args:
-        iac_resources (list)
-
-    Returns:
-        dict
-    """
     return {resource["id"]: resource for resource in iac_resources}
 
 
 def analyze(cloud_file, iac_file):
-    """
-    Main function to analyze cloud vs IaC resources.
-
-    Args:
-        cloud_file (str)
-        iac_file (str)
-
-    Returns:
-        list: Analysis report
-    """
     cloud_resources = load_json(cloud_file)
     iac_resources = load_json(iac_file)
     iac_index = index_iac_resources(iac_resources)
@@ -59,31 +54,24 @@ def analyze(cloud_file, iac_file):
     return report
 
 
-def upload_to_s3(report, bucket_name="analyzer-report", key="report.json"):
+def upload_to_s3(report, bucket_name=S3_BUCKET, key=S3_KEY):
     """
-    Upload the analyzer report to LocalStack S3.
+    Upload the analyzer report to S3 (LocalStack or AWS).
+    """
 
-    Args:
-        report (list): Analyzer report
-        bucket_name (str): Name of S3 bucket
-        key (str): Object key in S3
-    """
-    # initialize S3 client for LocalStack
     s3 = boto3.client(
         "s3",
-        endpoint_url="http://localstack:4566",  # localStack default endpoint
-        aws_access_key_id="test",
-        aws_secret_access_key="test",
-        region_name="us-east-1"
+        endpoint_url=S3_ENDPOINT, 
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID", "test"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY", "test"),
+        region_name=AWS_REGION
     )
 
-    # create bucket if it doesn't exist
     try:
         s3.create_bucket(Bucket=bucket_name)
     except s3.exceptions.BucketAlreadyOwnedByYou:
-        pass  # if bucket already exists
+        pass
 
-    # upload report
     s3.put_object(
         Bucket=bucket_name,
         Key=key,
@@ -94,14 +82,9 @@ def upload_to_s3(report, bucket_name="analyzer-report", key="report.json"):
 
 
 if __name__ == "__main__":
-    # run analysis
-    report = analyze(
-        "data/cloud_resources.json",
-        "data/iac_resources.json"
-    )
+    # run analysis with configurable files
+    report = analyze(CLOUD_FILE, IAC_FILE)
 
-    # print report to console
     print(json.dumps(report, indent=2))
 
-    # upload report to S3
     upload_to_s3(report)

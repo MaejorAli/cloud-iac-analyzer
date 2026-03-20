@@ -10,7 +10,7 @@ def test_missing_iac_resource():
     result = compare_resources(cloud_resource, None)
 
     assert result["State"] == "Missing"
-    assert result["ChangeLog"] == []
+    assert result["ChangeLog"] == {}
 
 
 def test_match_resources():
@@ -23,7 +23,7 @@ def test_match_resources():
     result = compare_resources(cloud_resource, iac_resource)
 
     assert result["State"] == "Match"
-    assert result["ChangeLog"] == []
+    assert result["ChangeLog"] == {}
 
 
 def test_modified_resources():
@@ -63,3 +63,26 @@ def test_partial_missing_key():
 
     assert result["State"] == "Modified"
     assert result["ChangeLog"][0]["KeyName"] == "region"
+
+
+def test_empty_resources():
+    """
+    Edge case: both cloud and IaC resources are empty
+    """
+    result = compare_resources({}, {})
+
+    assert result["State"] == "Match"
+    assert result["ChangeLog"] == {}
+
+
+def test_null_values():
+    """
+    Edge case: None vs missing vs actual value
+    """
+    cloud = {"id": "1", "size": None}
+    iac = {"id": "1", "size": None}
+
+    result = compare_resources(cloud, iac)
+
+    assert result["State"] == "Match"
+    assert result["ChangeLog"] == {}
