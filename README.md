@@ -64,7 +64,7 @@ cat report.json
     },
     "IacResourceItem": {},
     "State": "Missing",
-    "ChangeLog": []
+    "ChangeLog": {}
   }
 ]
 ```
