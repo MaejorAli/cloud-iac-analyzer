@@ -1,4 +1,3 @@
-# tests/test_main.py
 import json
 import pytest
 from unittest.mock import patch, MagicMock
