@@ -23,6 +23,12 @@ docker-compose down -v
 Run tests using:
 `pytest -v`
 
+Run Unit tests:
+`pytest -m unit`
+
+Run Integration tests:
+`pytest -m integration`
+
 ## Retrieving the Report
 Download the report from LocalStack S3 bucket:
 ```bash

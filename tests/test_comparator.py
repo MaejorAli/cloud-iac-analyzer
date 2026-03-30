@@ -1,88 +1,41 @@
+import pytest
 from analyzer.comparator import compare_resources
 
 
-def test_missing_iac_resource():
-    """
-    Should return 'Missing' when IaC resource is not found
-    """
-    cloud_resource = {"id": "1", "name": "bucket"}
-
-    result = compare_resources(cloud_resource, None)
-
-    assert result["State"] == "Missing"
-    assert result["ChangeLog"] == {}
-
-
-def test_match_resources():
-    """
-    Should return 'Match' when resources are identical
-    """
-    cloud_resource = {"id": "1", "name": "bucket"}
-    iac_resource = {"id": "1", "name": "bucket"}
-
-    result = compare_resources(cloud_resource, iac_resource)
-
-    assert result["State"] == "Match"
-    assert result["ChangeLog"] == {}
-
-
-def test_modified_resources():
-    """
-    Should detect differences and return 'Modified'
-    """
-    cloud_resource = {
-        "id": "1",
-        "tags": {"size": "10kb"}
-    }
-
-    iac_resource = {
-        "id": "1",
-        "tags": {"size": "20kb"}
-    }
-
-    result = compare_resources(cloud_resource, iac_resource)
-
-    assert result["State"] == "Modified"
-    assert len(result["ChangeLog"]) == 1
-
-    change = result["ChangeLog"][0]
-
-    assert change["KeyName"] == "tags.size"
-    assert change["CloudValue"] == "10kb"
-    assert change["IacValue"] == "20kb"
-
-
-def test_partial_missing_key():
-    """
-    Edge case: key exists in cloud but not in IaC
-    """
-    cloud_resource = {"id": "1", "region": "us-east-1"}
-    iac_resource = {"id": "1"}
-
-    result = compare_resources(cloud_resource, iac_resource)
-
-    assert result["State"] == "Modified"
-    assert result["ChangeLog"][0]["KeyName"] == "region"
-
-
-def test_empty_resources():
-    """
-    Edge case: both cloud and IaC resources are empty
-    """
-    result = compare_resources({}, {})
-
-    assert result["State"] == "Match"
-    assert result["ChangeLog"] == {}
-
-
-def test_null_values():
-    """
-    Edge case: None vs missing vs actual value
-    """
-    cloud = {"id": "1", "size": None}
-    iac = {"id": "1", "size": None}
-
+# Core scenarios (Missing, Match, Modified)
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "cloud,iac,expected_state,expected_changelog",
+    [
+        # IaC missing
+        ({"id": "1"}, None, "Missing", {}),
+        # Identical
+        ({"id": "1", "name": "bucket"}, {"id": "1", "name": "bucket"}, "Match", {}),
+        # Simple modification
+        ({"id": "1", "tags": {"size": "10kb"}}, {"id": "1", "tags": {"size": "20kb"}}, "Modified", [{"KeyName": "tags.size", "CloudValue": "10kb", "IacValue": "20kb"}]),
+        # Partial missing key
+        ({"id": "1", "region": "us-east-1"}, {"id": "1"}, "Modified", [{"KeyName": "region", "CloudValue": "us-east-1", "IacValue": None}]),
+    ]
+)
+def test_compare_resources_core(cloud, iac, expected_state, expected_changelog):
     result = compare_resources(cloud, iac)
+    assert result["State"] == expected_state
+    assert result["ChangeLog"] == expected_changelog
 
-    assert result["State"] == "Match"
+
+# Edge cases
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "cloud,iac,expected_state",
+    [
+        ({}, {}, "Match"),  # empty
+        ({"id": "1", "size": None}, {"id": "1", "size": None}, "Match"),  # nulls
+        ({"a": {"b": {"c": {"d": 1}}}}, {"a": {"b": {"c": {"d": 1}}}}, "Match"),  # deep nesting
+        ({"id": "1", "values": [1, "2", 3]}, {"id": "1", "values": [1, 2, 3]}, "Match"),  # mixed arrays
+        ({"name": "Bucket "}, {"name": "bucket"}, "Match"),  # string normalization
+    ]
+)
+def test_compare_resources_edge_cases(cloud, iac, expected_state):
+    result = compare_resources(cloud, iac)
+    assert result["State"] == expected_state
     assert result["ChangeLog"] == {}
